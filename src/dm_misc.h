@@ -45,6 +45,14 @@ void g_string_maybe_shrink(GString *s);
 int drop_privileges(char *newuser, char *newgroup);
 
 /**
+   \brief get the number of opened files (requires /proc mounted)
+   \return
+        - -1 on error
+        - number of opened files
+*/
+int get_opened_fd_count(void);
+
+/**
  * \brief create a unique id for a message (used for pop, stored per message)
  * \param target target string. Length should be UID_SIZE 
  * \param message_idnr message_idnr of message
@@ -177,5 +185,7 @@ uint64_t stridx(const char *s, char c);
 gchar * get_crlf_encoded_opt(const gchar *string, int dots);
 void strip_crlf(char *buffer);
 void uint64_free(void *);
+
+int diff_time(struct timeval before, struct timeval after);
 
 #endif

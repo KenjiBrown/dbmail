@@ -104,6 +104,26 @@ int drop_privileges(char *newuser, char *newgroup)
 	return 0;
 }
 
+int get_opened_fd_count(void)
+{
+	DIR* dir = NULL;
+	struct dirent* entry = NULL;
+	char buf[32];
+	int fd_count = 0;
+
+	snprintf(buf, 32, "/proc/%i/fd/", getpid());
+
+	dir = opendir(buf);
+	if (dir == NULL)
+		return -1;
+
+	while ((entry = readdir(dir)) != NULL)
+		fd_count++;
+	closedir(dir);
+
+	return fd_count - 2; /* exclude '.' and '..' entries */
+}
+
 void create_unique_id(char *target, uint64_t message_idnr)
 {
 	char md5_str[FIELDSIZE];
@@ -1029,7 +1049,7 @@ int g_tree_merge(GTree *a, GTree *b, int condition)
 
 			type=g_strdup("AND");
 
-			if (! g_tree_nnodes(a) > 0)
+			if (! (g_tree_nnodes(a) > 0))
 				break;
 
 			/* delete from A all keys not in B */
@@ -1053,7 +1073,7 @@ int g_tree_merge(GTree *a, GTree *b, int condition)
 		case IST_SUBSEARCH_OR:
 			type=g_strdup("OR");
 			
-			if (! g_tree_nnodes(b) > 0)
+			if (! (g_tree_nnodes(b) > 0))
 				break;
 
 			merger->tree = a;
@@ -1081,7 +1101,7 @@ int g_tree_merge(GTree *a, GTree *b, int condition)
 		case IST_SUBSEARCH_NOT:
 			type=g_strdup("NOT");
 
-			if (! g_tree_nnodes(b) > 0)
+			if (! (g_tree_nnodes(b) > 0))
 				break;
 			
 			keys = g_tree_keys(b);
@@ -2420,6 +2440,18 @@ uint64_t stridx(const char *s, char c)
 void uint64_free(void *data)
 {
 	mempool_push(small_pool, data, sizeof(uint64_t));
+}
+
+/*
+ * calculate the difference between two timeval values
+ * as number of seconds, using default rounding
+ */
+int diff_time(struct timeval before, struct timeval after)
+{
+	int tbefore = before.tv_sec * 1000000 + before.tv_usec;
+	int tafter = after.tv_sec * 1000000 + after.tv_usec;
+	int tdiff = tafter - tbefore;
+	return (int)rint((double)tdiff/1000000);
 }
 
 
